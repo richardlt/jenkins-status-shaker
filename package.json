@@ -1,0 +1,24 @@
+{
+  "name": "jenkins-status-shaker",
+  "version": "0.1.0",
+  "description": "A npm module that give you the global status for a list of Jenkins jobs or/and views",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/richardlt/jenkins-status-shaker.git"
+  },
+  "author": "richard.le.terrier@gmail.com",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/richardlt/jenkins-status-shaker/issues"
+  },
+  "homepage": "https://github.com/richardlt/jenkins-status-shaker#readme",
+  "dependencies": {
+    "async": "^1.5.2",
+    "jenkins-api": "^0.2.8",
+    "winston": "^2.1.1"
+  }
+}
