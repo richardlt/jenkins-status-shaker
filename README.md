@@ -11,8 +11,10 @@ TODO :
 - Mix results of jobs and views
 - Catch error if job or view not found
 - Get previous status of a job if current build has been aborted
-- ...
 - Publish module on npm repository
+- Add test and Travis build
+- Add npm dependencies check
+- ...
 ```
 
 Example :
