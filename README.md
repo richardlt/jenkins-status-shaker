@@ -8,7 +8,6 @@ Work in progress...
 
 TODO :
 ```
-- Catch error if job or view not found
 - Get previous status of a job if current build has been aborted
 - Publish module on npm repository
 - Add test and Travis build

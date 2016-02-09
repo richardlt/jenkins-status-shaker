@@ -65,8 +65,8 @@ module.exports = function Shaker(jenkins) {
         _jobs.forEach(function(job) {
             jobsCalls.push(function(callback) {
                 _jenkins.job_info(job, function(err, data) {
-                    if(err) {
-                        callback('Error getting info from job "'+job+'"', null)
+                    if (err) {
+                        callback('Error getting info from job <' + job + '>', null)
                     } else {
                         callback(null, data);
                     }
@@ -97,8 +97,8 @@ module.exports = function Shaker(jenkins) {
         _views.forEach(function(view) {
             viewsCalls.push(function(callback) {
                 _jenkins.all_jobs_in_view(view, function(err, data) {
-                    if(err) {
-                        callback('Error getting info from view "'+view+'"', null)
+                    if (err) {
+                        callback('Error getting info from view <' + view + '>', null)
                     } else {
                         callback(null, data);
                     }
@@ -127,8 +127,8 @@ module.exports = function Shaker(jenkins) {
         };
 
         async.parallel([jobsParallel, viewsParallel], function(err, results) {
-            if(err) {
-                winston.error('[Shaker][getStatus] An error happened when getting status from Jenkins');
+            if (err) {
+                winston.error('[Shaker][getStatus] An error happened when getting status from Jenkins: "' + err + '"');
             } else {
                 winston.debug('[Shaker][getStatus] Receive colors : ' + results.join(','));
                 var cleanColorsAndWorkingStatus = _getCleanColorsAndWorkingStatus(results[0].concat(results[1]));
