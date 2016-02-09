@@ -1,4 +1,6 @@
-# jenkins status shaker
+# jenkins status shaker 
+
+[![Build Status](https://travis-ci.org/richardlt/jenkins-status-shaker.svg?branch=master)](https://travis-ci.org/richardlt/jenkins-status-shaker)
 
 <img src="https://cloud.githubusercontent.com/assets/1819206/12892413/4c4d9c00-ce8c-11e5-95de-a21d7128a60b.PNG" width="130" align="left" />
 
