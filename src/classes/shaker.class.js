@@ -65,60 +65,73 @@ module.exports = function Shaker(jenkins) {
         _jobs.forEach(function(job) {
             jobsCalls.push(function(callback) {
                 _jenkins.job_info(job, function(err, data) {
-                    callback(err, data);
+                    if(err) {
+                        callback('Error getting info from job "'+job+'"', null)
+                    } else {
+                        callback(null, data);
+                    }
                 });
             });
         });
 
-        async.parallel(jobsCalls, function(err, results) {
-            if (err) {
-                winston.error('[Shaker][getStatus] An error happened when getting status from Jenkins');
-            } else {
-                var colors = [];
-                results.forEach(function(result) {
-                    if (!result.hasOwnProperty('color')) {
-                        winston.error('[Shaker][getStatus] No color found for the job ' + result.name);
-                    } else {
-                        colors.push(result.color);
-                    }
-                });
-                winston.debug('[Shaker][getStatus] Receive colors : ' + colors.join(','));
-                var cleanColorsAndWorkingStatus = _getCleanColorsAndWorkingStatus(colors);
-                var status = _computeStatusFromCleanColors(cleanColorsAndWorkingStatus.colors);
-                _status = {
-                    status: status,
-                    working: cleanColorsAndWorkingStatus.working
-                };
-                _notifyStatusReceived();
-            }
-        });
+        var jobsParallel = function(callback) {
+            async.parallel(jobsCalls, function(err, results) {
+                if (err) {
+                    callback(err, null);
+                } else {
+                    var colors = [];
+                    results.forEach(function(result) {
+                        if (!result.hasOwnProperty('color')) {
+                            winston.error('[Shaker][getStatus] No color found for the job ' + result.name);
+                        } else {
+                            colors.push(result.color);
+                        }
+                    });
+                    callback(null, colors);
+                }
+            });
+        };
 
         var viewsCalls = [];
 
         _views.forEach(function(view) {
             viewsCalls.push(function(callback) {
                 _jenkins.all_jobs_in_view(view, function(err, data) {
-                    callback(err, data);
+                    if(err) {
+                        callback('Error getting info from view "'+view+'"', null)
+                    } else {
+                        callback(null, data);
+                    }
                 });
             });
         });
 
-        async.parallel(viewsCalls, function(err, results) {
-            if (err) {
-                winston.error('[Shaker][getStatus] An error happened when getting status from Jenkins ' + err);
-            } else {
-                var colors = [];
-                results.forEach(function(result) {
-                    result.forEach(function(job) {
-                        if (!job.hasOwnProperty('color')) {
-                            winston.error('[Shaker][getStatus] No color found for the job ' + job.name);
-                        } else {
-                            colors.push(job.color);
-                        }
+        var viewsParallel = function(callback) {
+            async.parallel(viewsCalls, function(err, results) {
+                if (err) {
+                    callback(err, null)
+                } else {
+                    var colors = [];
+                    results.forEach(function(result) {
+                        result.forEach(function(job) {
+                            if (!job.hasOwnProperty('color')) {
+                                winston.error('[Shaker][getStatus] No color found for the job ' + job.name);
+                            } else {
+                                colors.push(job.color);
+                            }
+                        });
                     });
-                });
-                winston.debug('[Shaker][getStatus] Receive colors : ' + colors.join(','));
-                var cleanColorsAndWorkingStatus = _getCleanColorsAndWorkingStatus(colors);
+                    callback(null, colors);
+                }
+            });
+        };
+
+        async.parallel([jobsParallel, viewsParallel], function(err, results) {
+            if(err) {
+                winston.error('[Shaker][getStatus] An error happened when getting status from Jenkins');
+            } else {
+                winston.debug('[Shaker][getStatus] Receive colors : ' + results.join(','));
+                var cleanColorsAndWorkingStatus = _getCleanColorsAndWorkingStatus(results[0].concat(results[1]));
                 var status = _computeStatusFromCleanColors(cleanColorsAndWorkingStatus.colors);
                 _status = {
                     status: status,
@@ -127,7 +140,6 @@ module.exports = function Shaker(jenkins) {
                 _notifyStatusReceived();
             }
         });
-
     };
 
     this.setJobs = function(jobs) {
