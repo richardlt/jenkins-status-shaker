@@ -7,10 +7,10 @@ This awesome tool will mix all status from a given list of Jenkins jobs and view
 TODO :
 ```
 - Get previous status of a job if current build has been aborted
-- Add test and Travis build
-- Add npm dependencies check
 - ...
 ```
+
+<br/>
 
 Install :
 ```javascript
@@ -21,7 +21,7 @@ Example :
 ```javascript
 var JenkinsStatusShaker = require('jenkins-status-shaker');
 
-var shaker = JenkinsStatusShaker.init('jenkins.mydomain.com', 'username', 'password');
+var shaker = JenkinsStatusShaker.init('jenkins.mydomain.com', 'username', 'password'); // username and password are optional
 
 shaker.setJobs(['job1', 'job2', 'job3']).setViews(['view1', 'view2']).onStatusReceived(function(status) {
     console.log(status);
