@@ -2,8 +2,10 @@ var winston = require('winston'),
     async = require('async');
 
 var StatusConstant = require('../constants/status.constant.js'),
-    ColorConstant = require('../constants/color.constant.js');
-    
+    ColorConstant = require('../constants/color.constant.js'),
+    JobTool = require('../tools/job.tool.js'),
+    ColorTool = require('../tools/color.tool.js');
+
 module.exports = function Shaker(jenkins) {
 
     var _jenkins = jenkins;
@@ -23,63 +25,6 @@ module.exports = function Shaker(jenkins) {
             _statusReceivedCallback(_status);
         }
     };
-
-    var _getCleanColorsAndWorkingStatus = function(colors) {
-        var working = false;
-        var cleanColors = colors.map(function(color) {
-            if (color === ColorConstant.RED_ANIME) {
-                working = true;
-                return ColorConstant.RED;
-            } else if (color === ColorConstant.YELLOW_ANIME) {
-                working = true;
-                return ColorConstant.YELLOW;
-            } else if (color === ColorConstant.BLUE_ANIME) {
-                working = true;
-                return ColorConstant.BLUE;
-            } else {
-                return color;
-            }
-        });
-        return {
-            colors: cleanColors,
-            working: working
-        };
-    };
-
-    var _computeStatusFromCleanColors = function(colors) {
-        if (colors.indexOf(ColorConstant.RED) > -1) {
-            return StatusConstant.FAILURE;
-        } else if (colors.indexOf(ColorConstant.YELLOW) > -1) {
-            return StatusConstant.UNSTABLE;
-        } else if (colors.indexOf(ColorConstant.BLUE) > -1) {
-            return StatusConstant.SUCCESS;
-        } else {
-            return StatusConstant.UNKNOWN;
-        }
-    };
-
-    var _getLastNotAbortedBuildColor = function(job, callback) {
-        var maxBuildNumber = -1;
-        var lastNotAbortedBuildColor = ColorConstant.NOT_BUILD;
-        var lastFailedBuild = job.lastFailedBuild; // FAILURE
-        if (lastFailedBuild && lastFailedBuild.number > maxBuildNumber) {
-            maxBuildNumber = lastFailedBuild.number;
-            lastNotAbortedBuildColor = ColorConstant.RED;
-        }
-        var lastUnstableBuild = job.lastUnstableBuild; // UNSTABLE
-        if (lastUnstableBuild && lastUnstableBuild.number > maxBuildNumber) {
-            maxBuildNumber = lastUnstableBuild.number;
-            lastNotAbortedBuildColor = ColorConstant.YELLOW;
-        }
-        var lastStableBuild = job.lastStableBuild; // SUCCESS
-        if (lastStableBuild && lastStableBuild.number > maxBuildNumber) {
-            maxBuildNumber = lastStableBuild.number;
-            lastNotAbortedBuildColor = ColorConstant.BLUE;
-        }
-        return lastNotAbortedBuildColor;
-    };
-
-
 
     this.getStatus = function() {
 
@@ -102,15 +47,7 @@ module.exports = function Shaker(jenkins) {
                 if (err) {
                     callback(err, null);
                 } else {
-                    var colors = [];
-                    results.forEach(function(job) {
-                        if (job.color === ColorConstant.ABORTED) {
-                            colors.push(_getLastNotAbortedBuildColor(job));
-                        } else {
-                            colors.push(job.color);
-                        }
-                    });
-                    callback(null, colors);
+                    callback(null, JobTool.getColorsFromJobList(results));
                 }
             });
         };
@@ -141,19 +78,12 @@ module.exports = function Shaker(jenkins) {
                             }
                         });
 
-                        if(jobsAbortedCalls.length > 0) {
+                        if (jobsAbortedCalls.length > 0) {
                             async.parallel(jobsAbortedCalls, function(err, results) {
                                 if (err) {
                                     callback(err, null);
                                 } else {
-                                    results.forEach(function(job) {
-                                        if (job.color === ColorConstant.ABORTED) {
-                                            colors.push(_getLastNotAbortedBuildColor(job));
-                                        } else {
-                                            colors.push(job.color);
-                                        }
-                                    });
-                                    callback(null, colors);
+                                    callback(null, colors.concat(JobTool.getColorsFromJobList(results)));
                                 }
                             });
                         } else {
@@ -183,8 +113,8 @@ module.exports = function Shaker(jenkins) {
                 winston.error('[Shaker][getStatus] An error happened when getting status from Jenkins: "' + err + '"');
             } else {
                 winston.debug('[Shaker][getStatus] Receive colors : ' + results.join(','));
-                var cleanColorsAndWorkingStatus = _getCleanColorsAndWorkingStatus(results[0].concat(results[1]));
-                var status = _computeStatusFromCleanColors(cleanColorsAndWorkingStatus.colors);
+                var cleanColorsAndWorkingStatus = ColorTool.getCleanColorsAndWorkingStatus(results[0].concat(results[1]));
+                var status = ColorTool.computeStatusFromCleanColors(cleanColorsAndWorkingStatus.colors);
                 _status = {
                     status: status,
                     working: cleanColorsAndWorkingStatus.working
