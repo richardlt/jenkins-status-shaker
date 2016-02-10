@@ -3,7 +3,7 @@ var winston = require('winston'),
 
 var StatusConstant = require('../constants/status.constant.js'),
     ColorConstant = require('../constants/color.constant.js');
-
+    
 module.exports = function Shaker(jenkins) {
 
     var _jenkins = jenkins;
@@ -58,6 +58,29 @@ module.exports = function Shaker(jenkins) {
         }
     };
 
+    var _getLastNotAbortedBuildColor = function(job, callback) {
+        var maxBuildNumber = -1;
+        var lastNotAbortedBuildColor = ColorConstant.NOT_BUILD;
+        var lastFailedBuild = job.lastFailedBuild; // FAILURE
+        if (lastFailedBuild && lastFailedBuild.number > maxBuildNumber) {
+            maxBuildNumber = lastFailedBuild.number;
+            lastNotAbortedBuildColor = ColorConstant.RED;
+        }
+        var lastUnstableBuild = job.lastUnstableBuild; // UNSTABLE
+        if (lastUnstableBuild && lastUnstableBuild.number > maxBuildNumber) {
+            maxBuildNumber = lastUnstableBuild.number;
+            lastNotAbortedBuildColor = ColorConstant.YELLOW;
+        }
+        var lastStableBuild = job.lastStableBuild; // SUCCESS
+        if (lastStableBuild && lastStableBuild.number > maxBuildNumber) {
+            maxBuildNumber = lastStableBuild.number;
+            lastNotAbortedBuildColor = ColorConstant.BLUE;
+        }
+        return lastNotAbortedBuildColor;
+    };
+
+
+
     this.getStatus = function() {
 
         var jobsCalls = [];
@@ -80,11 +103,11 @@ module.exports = function Shaker(jenkins) {
                     callback(err, null);
                 } else {
                     var colors = [];
-                    results.forEach(function(result) {
-                        if (!result.hasOwnProperty('color')) {
-                            winston.error('[Shaker][getStatus] No color found for the job ' + result.name);
+                    results.forEach(function(job) {
+                        if (job.color === ColorConstant.ABORTED) {
+                            colors.push(_getLastNotAbortedBuildColor(job));
                         } else {
-                            colors.push(result.color);
+                            colors.push(job.color);
                         }
                     });
                     callback(null, colors);
@@ -100,7 +123,42 @@ module.exports = function Shaker(jenkins) {
                     if (err) {
                         callback('Error getting info from view <' + view + '>', null)
                     } else {
-                        callback(null, data);
+                        var colors = [];
+                        var jobsAbortedCalls = [];
+                        data.forEach(function(job) {
+                            if (job.color === ColorConstant.ABORTED) {
+                                jobsAbortedCalls.push(function(callbackAborted) {
+                                    _jenkins.job_info(job.name, function(err, data) {
+                                        if (err) {
+                                            callbackAborted('Error getting info from job <' + job.name + '>', null)
+                                        } else {
+                                            callbackAborted(null, data);
+                                        }
+                                    });
+                                });
+                            } else {
+                                colors.push(job.color);
+                            }
+                        });
+
+                        if(jobsAbortedCalls.length > 0) {
+                            async.parallel(jobsAbortedCalls, function(err, results) {
+                                if (err) {
+                                    callback(err, null);
+                                } else {
+                                    results.forEach(function(job) {
+                                        if (job.color === ColorConstant.ABORTED) {
+                                            colors.push(_getLastNotAbortedBuildColor(job));
+                                        } else {
+                                            colors.push(job.color);
+                                        }
+                                    });
+                                    callback(null, colors);
+                                }
+                            });
+                        } else {
+                            callback(null, colors);
+                        }
                     }
                 });
             });
@@ -112,14 +170,8 @@ module.exports = function Shaker(jenkins) {
                     callback(err, null)
                 } else {
                     var colors = [];
-                    results.forEach(function(result) {
-                        result.forEach(function(job) {
-                            if (!job.hasOwnProperty('color')) {
-                                winston.error('[Shaker][getStatus] No color found for the job ' + job.name);
-                            } else {
-                                colors.push(job.color);
-                            }
-                        });
+                    results.forEach(function(viewColors) {
+                        colors = colors.concat(viewColors);
                     });
                     callback(null, colors);
                 }

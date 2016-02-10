@@ -5,5 +5,6 @@ module.exports = {
     'YELLOW_ANIME': 'yellow_anime',
     'RED': 'red',
     'RED_ANIME': 'red_anime',
-    'NOT_BUILD': 'notbuilt'
+    'NOT_BUILD': 'notbuilt',
+    'ABORTED': 'aborted'
 };
