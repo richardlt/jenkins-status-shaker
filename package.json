@@ -1,6 +1,6 @@
 {
   "name": "jenkins-status-shaker",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "A npm module that give you the global status for a list of Jenkins jobs or/and views",
   "main": "src/jenkins-status-shaker.js",
   "scripts": {
