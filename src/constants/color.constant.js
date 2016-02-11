@@ -6,5 +6,6 @@ module.exports = {
     'RED': 'red',
     'RED_ANIME': 'red_anime',
     'NOT_BUILD': 'notbuilt',
-    'ABORTED': 'aborted'
+    'ABORTED': 'aborted',
+    'ABORTED_ANIME': 'aborted_anime'
 };

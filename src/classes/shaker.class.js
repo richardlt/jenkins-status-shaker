@@ -63,7 +63,7 @@ module.exports = function Shaker(jenkins) {
                         var colors = [];
                         var jobsAbortedCalls = [];
                         data.forEach(function(job) {
-                            if (job.color === ColorConstant.ABORTED) {
+                            if (job.color === ColorConstant.ABORTED || job.color === ColorConstant.ABORTED_ANIME) {
                                 jobsAbortedCalls.push(function(callbackAborted) {
                                     _jenkins.job_info(job.name, function(err, data) {
                                         if (err) {

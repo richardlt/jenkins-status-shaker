@@ -37,6 +37,16 @@ describe('JobTool', function() {
             assert.equal(ColorConstant.BLUE, colors[0]);
         });
 
+        it('Test with an aborted anime job', function() {
+            var jobs = [{
+                color: ColorConstant.ABORTED_ANIME,
+                lastStableBuild: { number: 1 }
+            }];
+            var colors = JobTool.getColorsFromJobList(jobs);
+            assert.equal(1, colors.length);
+            assert.equal(ColorConstant.BLUE_ANIME, colors[0]);
+        });
+
     });
 
 });
